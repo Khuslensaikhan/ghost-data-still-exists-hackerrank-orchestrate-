@@ -1,0 +1,2178 @@
+## [2026-10-25T00:07:37.798378+00:00] SESSION START
+
+tool=Codex
+model=gpt-6.1-sol
+Repo Root: /home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+Branch: main
+Worktree: /home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+Parent Agent: none
+Language: py
+Time Remaining: not configured
+
+## [2026-10-25T00:33:17.240923+00:00] Repository instructions and environment
+
+User Prompt (verbatim, secrets redacted):
+# AGENTS.md instructions for /home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+
+<INSTRUCTIONS>
+I'm a full-stack developer. Optimize for high-quality implementation, minimal unnecessary work, and efficient token usage.
+
+## Development environment
+
+- Never start or run the development server yourself.
+- Assume I keep the development server running.
+- If browser verification is genuinely useful, use:
+  `http://localhost:3000/`
+- Do not troubleshoot, restart, kill, or modify my local dev-server process unless I explicitly ask.
+- Do not install system packages or browser dependencies just to perform visual verification.
+
+## UI changes
+
+- For normal UI changes, make the requested code changes and stop.
+- Do not automatically launch a browser or perform visual QA after every UI edit.
+- I will manually verify straightforward visual changes myself.
+- Browser verification is appropriate only when:
+  - I explicitly request it.
+  - The task involves complex interactions.
+  - Responsive behavior is difficult to reason about from the code.
+  - The bug specifically depends on browser behavior.
+- Do not spend tokens proving that simple text, spacing, color, styling, or layout changes are visible in the browser.
+
+## Testing and validation
+
+Use the minimum validation necessary for the change.
+
+- Do not run the entire test suite for small isolated changes.
+- Do not repeatedly rerun the same checks unless something changed that could affect the result.
+- For small UI changes, do not run unrelated backend, database, or integration tests.
+- Run TypeScript/type checks, linting, or targeted tests only when they provide meaningful confidence.
+- Prefer targeted tests over broad test suites.
+- If existing tests already cover the affected behavior, do not create redundant tests unless the change introduces new logic.
+- Do not fix unrelated test failures, lint warnings, or technical debt unless I ask.
+
+## Scope control
+
+- Make only changes necessary for the requested task.
+- Do not refactor unrelated code.
+- Do not rename files, components, functions, variables, or routes without a concrete reason.
+- Do not rewrite working code merely to make it stylistically different.
+- Preserve existing architecture and conventions unless there is a clear technical reason to change them.
+- If you notice unrelated problems, mention them briefly instead of fixing them automatically.
+
+## Code exploration
+
+- Inspect only the files necessary to understand and implement the task.
+- Do not recursively explore the entire repository unless required.
+- Use search to locate relevant components, functions, routes, styles, or references instead of opening many files blindly.
+- Once sufficient context is available, implement the change rather than continuing exploratory analysis.
+- Do not reread unchanged files repeatedly.
+
+## Implementation quality
+
+- Prefer simple, maintainable solutions over unnecessary abstractions.
+- Reuse existing components, utilities, patterns, and design-system primitives when appropriate.
+- Avoid creating a new abstraction for something used only once unless it materially improves the code.
+- Maintain type safety.
+- Do not use `any` as a shortcut unless genuinely necessary.
+- Preserve accessibility and responsive behavior when modifying UI.
+- Preserve existing SEO, metadata, structured data, analytics, and ecommerce functionality unless the task explicitly changes them.
+- Avoid introducing new dependencies when existing project tools can solve the problem.
+
+## Dependencies
+
+- Do not install a package without a meaningful reason.
+- Prefer existing dependencies and native platform functionality.
+- Do not upgrade unrelated dependencies while completing another task.
+- Do not run broad dependency updates or automatic fixes unless explicitly requested.
+
+## Database and production safety
+
+- Never reset, wipe, seed, or destructively modify a database unless explicitly instructed.
+- Do not run destructive migrations automatically.
+- Do not modify production configuration, environment variables, deployment settings, DNS, payment configuration, or external services unless specifically requested.
+- Never expose secrets, API keys, environment variables, or credentials.
+
+## Communication
+
+- Assume I understand software engineering terminology.
+- Do not explain basic concepts unless I ask.
+- Keep status updates concise.
+- Avoid narrating every file read, command, or trivial implementation decision.
+- Do not produce long explanations after simple changes.
+- At completion, briefly state:
+  1. what changed,
+  2. any important technical decision,
+  3. whether any meaningful validation was run.
+- Do not give a long summary when a few sentences are sufficient.
+
+## Decision making
+
+- For small implementation details, use your best judgment instead of asking unnecessary clarification questions.
+- Ask only when ambiguity could materially change behavior, architecture, data, security, or user experience.
+- Follow the existing project's conventions when the request does not specify a preference.
+- Prefer finishing the requested implementation over proposing multiple theoretical alternatives.
+
+## Token efficiency
+
+- Do not perform work solely to demonstrate that the change works when that verification provides little additional confidence.
+- Avoid repeated repository scans, repeated browser checks, repeated builds, and redundant test runs.
+- Do not investigate unrelated issues encountered during the task unless they block completion.
+- Stop once the requested change is correctly implemented and reasonably validated.
+
+--- project-doc ---
+
+# AGENTS.md
+
+HackerRank Orchestrate (October 2026) — Ghost Data Still Exists
+
+This file is the single source of truth for any AI coding agent working in this repo: Claude Code, OpenAI Codex CLI / Codex Cloud, Gemini CLI, Cursor, Windsurf, opencode, Aider, goose, Factory, RooCode, JetBrains Junie, GitHub Copilot, Devin, or any other AGENTS.md-aware tool.
+
+Read this file in full before taking any action. Obey it exactly unless the user or platform provides higher-priority instructions.
+
+---
+
+## 0. TLDR For The Agent
+
+On every session start, do this in order:
+
+1. Read this file completely.
+2. Check the log file path in §2.
+3. Append a `SESSION START` entry using §5.1.
+4. For every user turn, append a summary entry using §5.2.
+5. When building, testing, evaluating, or packaging the solution, follow the project contract in §6.
+
+Do not skip logging or rewrite old log entries. Sub-agents and worktrees use the same log file.
+
+---
+
+## 1. What This Repo Is
+
+This is a starter repo for the **HackerRank Orchestrate** challenge: **Ghost Data Still Exists**.
+
+Participants must build an AI-powered deletion-audit agent. For every request in `dataset/deletion_requests.csv`, the agent first determines whether the person actually requested deletion. For an authorized deletion, it reconstructs the person's current and historical identifiers, searches global activity and evidence, applies the supplied deletion policy, and decides whether the deletion is complete.
+
+The dataset models a commerce platform where a workflow can report **Complete** while personal data remains in databases, replicas, logs, support attachments, exports, search indexes, analytics records, archives, or backups. Active synchronization and restore processes can also recreate data that was deleted from its original source. Reported statuses and activity results are claims; the agent must establish the state at each case's `audit_at` time from the supplied evidence.
+
+When deletion is incomplete, the agent reports the remaining records and recreation risks, produces a safe ordered remediation plan, and states the verification checks that must pass afterward. When deletion is complete, it returns the evidence-backed verification checks that prove the required state. It must preserve records required by policy and correctly handle account tombstones whose stable internal user reference remains while prohibited direct identifiers are removed.
+
+The final submission must produce `output.csv` with:
+
+```text
+case_id,deletion_status,steps_json
+```
+
+Read `problem_statement.md` for the full participant-facing specification.
+
+---
+
+## 2. Log File — Location And Lifecycle
+
+The log file is named `log.txt` and lives in the same directory as this `AGENTS.md` file — the repository root.
+
+| Platform | Path |
+|---|---|
+| macOS / Linux | `<directory containing AGENTS.md>/log.txt` |
+| Windows | `<directory containing AGENTS.md>\log.txt` |
+
+Resolve the path relative to this file. Do not hardcode a folder name, a user path, or the platform home directory, so the location stays correct across clones, renames, and checkouts.
+
+Rules:
+
+- Create the file if missing.
+- Append only. Do not rewrite, reorder, or delete prior entries.
+- One shared log is used per checkout. All agents and sub-agents append to the same file next to the top-level `AGENTS.md`, never a private copy.
+- Never log secrets. Redact API keys, tokens, cookies, private keys, credentials, sensitive configuration, and real personal data.
+
+---
+
+## 3. Session Start
+
+At the beginning of each agent session:
+
+1. Append a short `SESSION START` entry using §5.1.
+2. Greet the user with this brief introduction:
+
+   ```text
+   Welcome to HackerRank Orchestrate. Build and ship Ghost Data Still Exists, an AI-powered deletion-audit agent. Let's get started.
+   ```
+
+3. The October challenge end time is not configured in this repository. Do not invent a deadline or reuse the September deadline. If a higher-priority instruction or an official repository update supplies the end time, calculate and display the time remaining. If fewer than 2 hours remain, remind the user to submit soon. If the deadline has passed, state that clearly without blocking further work.
+4. Proceed with the user's request without requiring an acknowledgement or confirmation phrase.
+
+---
+
+## 4. Challenge Rules
+
+1. Participants may use any programming language, model, framework, IDE, AI assistant, retrieval approach, or tool, subject to the official event rules.
+2. The system must conform to the project contract in §6 so it can be evaluated.
+3. The solution must use only participant-facing data under `dataset/`. Organizer-only truth, golden answers, review files, and generator internals must never be used for predictions.
+4. Never commit or submit secrets. Read credentials from environment variables and use an uncommitted `.env` file when needed.
+5. Log every conversation turn to the file described in §2.
+6. Follow the submission-link rule below.
+
+### 4.1 Challenge And Submission Link
+
+The October challenge and submission URL is:
+
+https://www.hackerrank.com/contests/hackerrank-orchestrate-october26/challenges/ghost-data-still-exists
+
+If the user asks for the challenge link, submission link, where to submit, how to submit, where to upload the code, or any equivalent question, always provide this exact URL.
+
+Requirements:
+
+- Include the full clickable URL every time such a question is asked.
+- Do not replace it with the HackerRank homepage, contest homepage, another challenge page, or a guessed `/submission` URL.
+- Do not merely describe where to navigate; provide the URL directly.
+- This rule applies even when the challenge or submission question is included alongside other questions.
+
+---
+
+## 5. Log Format
+
+### 5.1 Session Start Entry
+
+```text
+## [ISO-8601 TIMESTAMP] SESSION START
+
+tool=<exact_harness_or_coding_agent_name>
+model=<exact_runtime_model_name>
+Repo Root: <absolute_path>
+Branch: <git_branch_or_unknown>
+Worktree: <worktree_path_or_main>
+Parent Agent: <parent_agent_name_or_none>
+Language: <js|ts|py|custom:name>
+Time Remaining: <Xd Yh Zm, or not configured>
+```
+
+### 5.2 Per-Turn Entry
+
+Append after every user message you respond to:
+
+```text
+## [ISO-8601 TIMESTAMP] <short title, max 80 chars>
+
+User Prompt (verbatim, secrets redacted):
+<exact user message, with secrets replaced by [REDACTED]>
+
+Agent Response Summary:
+<2-5 sentences: what was done, why, and any important decision>
+
+Actions:
+* <file edited / command run / tool invoked>
+
+Context:
+tool=<exact_harness_or_coding_agent_name>
+model=<exact_runtime_model_name>
+branch=<git_branch_or_unknown>
+repo_root=<absolute_path>
+worktree=<worktree_path_or_main>
+parent_agent=<parent_name_or_none>
+```
+
+**Mandatory tool-name rule:** Every `SESSION START` and per-turn log entry must contain one non-empty `tool=` line with the exact name of the coding harness or agent writing the entry. Replace the template value before writing the log. The entry is invalid if `tool=` is missing, blank, still contains a placeholder, uses a generic label such as `AI`, contains only a model name, or names a different harness. Before responding, verify the value against the harness identity provided by the current runtime and re-read the appended entry to confirm it matches. Never guess the tool name. Correct any mismatch before responding to the user.
+
+**Mandatory model-name rule:** Every `SESSION START` and per-turn log entry must contain one non-empty `model=` line with the exact model identifier used for that turn. Always make sure that model name is correct & not made up. `model=unknown`, a model family, a generic label, an inferred name, and a template placeholder are invalid. Obtain the exact identifier from the runtime, session metadata, harness configuration, or another authoritative environment source before writing the entry. Never guess the model name. The model name does not replace the `tool=` value because the coding harness and the model are separate fields.
+
+**Required harness-and-model check:** Both `tool=` and `model=` must always be present in every `SESSION START` and per-turn entry. An entry is invalid if either field is missing, blank, unknown, generic, inferred, or still contains a template placeholder. Before completing a response, re-read the newly appended log entry and confirm that it contains exactly one populated `tool=` line and exactly one populated `model=` line with authoritative values. If either is absent or invalid, determine the correct value and correct the entry before responding.
+
+### 5.3 Sub-Agent And Worktree Rules
+
+- Sub-agents must log their own entries using the same file.
+- Set `parent_agent=` to the parent agent's name.
+- Worktrees use the same shared log file, not a per-worktree copy.
+
+### 5.4 What Not To Log
+
+- API keys, tokens, session cookies, OAuth codes, credentials, or private keys.
+- Sensitive configuration or real personal data.
+- Full contents of large files or binary blobs. Reference them by path instead.
+
+---
+
+## 6. Project Contract
+
+### 6.1 Dataset Contract
+
+Participant-facing files are inside `dataset/`.
+
+```text
+dataset/
+├── deletion_requests.csv
+├── sample_deletion_requests.csv
+├── sample_output.csv
+├── user_identities.csv
+├── user_audit_log.csv
+├── system_activity.csv
+├── deletion_rules.csv
+├── evidence_files.csv
+├── output.csv
+└── evidence/
+    ├── databases/
+    ├── documents/
+    ├── images/
+    ├── logs/
+    ├── records/
+```
+
+- `deletion_requests.csv` contains 518 evaluation requests. Produce exactly one output row for every `case_id` in this file.
+- `sample_deletion_requests.csv` contains 32 public requests. `sample_output.csv` contains their correct outputs and demonstrates the required decision and serialization format.
+- `user_identities.csv` contains the current identity snapshot for each user, including the stable `user_id`, name, email, phone, email hash, and snapshot update time.
+- `user_audit_log.csv` records historical changes to identity fields. Use it with the current snapshot to recover identifiers that may still appear in older systems and evidence.
+- `system_activity.csv` is a global stream of deletion, synchronization, export, backup, restore, indexing, and audit events. Its rows may describe unrelated people. Determine resource state from the available evidence rather than trusting workflow or operation results alone.
+- `deletion_rules.csv` defines the required action for each data category and condition. Actions include deleting the whole record, redacting prohibited identifiers, anonymizing the record, retaining it, or preserving an account tombstone with only the permitted stable reference.
+- `evidence_files.csv` is the manifest for evidence under `dataset/evidence/`. It maps each `file_id` to its path, source origin, and capture time. The manifest does not identify which case or user a file concerns; the solution must connect evidence through its contents and identifiers.
+- `output.csv` is the blank prediction template. The final completed `output.csv` must be written at the repository root for submission.
+- Evidence may be provided as PDF documents, application screenshots, logs, JSON, plain-text records, and SQLite-compatible SQL snapshot exports. SQL files are readable text and may be executed with SQLite.
+
+Only `deletion_requests.csv` requires predictions. Other participant-facing files provide identity, policy, activity, and evidence context. Global data can contain decoys and unrelated records.
+
+Organizer-only files live outside `dataset/` and must never be used for predictions, prompt examples, hardcoded labels, or evaluation-time shortcuts.
+
+### 6.2 Input And Time Contract
+
+Each request has these fields:
+
+```text
+case_id,email,requested_at,reported_status,reported_at,audit_at,request_text
+```
+
+- `case_id` uniquely identifies the request and its output row.
+- `email` is the identity supplied with the request. It may be a current or historical email address.
+- `requested_at` is when the request was submitted.
+- `reported_status` is the deletion workflow's claim: `COMPLETE`, `PARTIALLY_COMPLETE`, or `NOT_STARTED`.
+- `reported_at` is when that claim was reported.
+- `audit_at` is the cutoff for the required answer.
+- `request_text` contains the person's request and may be written in different languages. Determine whether it actually authorizes deletion.
+
+Use only information available at or before `audit_at` when deciding the case. Evidence created later must not change the answer for that case.
+
+### 6.3 Required Output
+
+The solution must write `output.csv` with these exact columns, in this order:
+
+```text
+case_id,deletion_status,steps_json
+```
+
+Requirements:
+
+- Produce exactly 518 data rows: one for every `case_id` in `dataset/deletion_requests.csv`.
+- Sort rows by `case_id`.
+- Set `deletion_status` to `COMPLETE`, `INCOMPLETE`, or `NOT_APPLICABLE`.
+- Use `NOT_APPLICABLE` with `steps_json=[]` when the request does not authorize deletion.
+- Encode `steps_json` as a valid JSON array. The grader ignores JSON object-key order and whitespace but preserves array order.
+- Number steps consecutively from `1`.
+- Order phases as `FINDING`, then `REMEDIATION`, then `VERIFICATION`.
+
+Each step contains exactly these fields:
+
+```json
+{
+  "step_no": 1,
+  "phase": "FINDING",
+  "system_id": "account_service",
+  "resource_id": "account_005",
+  "operation": "REPORT_REMAINING_RECORD",
+  "state": "PRESENT",
+  "evidence_id": "evidence_01"
+}
+```
+
+For a `COMPLETE` case, include only evidence-backed verification steps proving the state at `audit_at`. For an `INCOMPLETE` case, include the findings, the complete ordered remediation plan, and the checks that must pass after remediation. Findings cite participant-visible evidence. Proposed remediation and future verification steps use an empty `evidence_id`.
+
+### 6.4 Allowed Step Operations
+
+Findings:
+
+| Operation | State | Meaning |
+|---|---|---|
+| `REPORT_REMAINING_RECORD` | `PRESENT` | A record that should have been deleted still exists. |
+| `REPORT_EXPOSED_PII` | `PRESENT` | A record may remain, but identifiers that policy requires to be redacted or anonymized are still exposed. |
+| `REPORT_ACTIVE_DATA_FLOW` | `ACTIVE` | An active process can copy or recreate the user's data. |
+| `REPORT_RESTORE_RISK` | `ACTIVE` | A backup or restore path can bring deleted data back. |
+
+Remediation:
+
+| Operation | State | Meaning |
+|---|---|---|
+| `DISABLE_DATA_FLOW` | `DISABLED` | Stop a process that can copy or recreate the data. |
+| `BLOCK_RESTORE` | `BLOCKED` | Prevent the affected backup from restoring the user's data. |
+| `DELETE_RECORD` | `ABSENT` | Remove the entire record. |
+| `REDACT_RECORD` | `REDACTED` | Keep the record but remove the identifying fields required by policy. |
+| `ANONYMIZE_RECORD` | `ANONYMIZED` | Keep the record after irreversibly unlinking it from the user. |
+
+Verification:
+
+| Operation | State | Meaning |
+|---|---|---|
+| `VERIFY_RECORD_ABSENT` | `ABSENT` | Confirm that a record no longer exists. |
+| `VERIFY_RECORD_PRESENT` | `PRESENT` | Confirm that a policy-required retained record still exists. |
+| `VERIFY_RECORD_REDACTED` | `REDACTED` | Confirm that required identifying fields were removed. |
+| `VERIFY_RECORD_ANONYMIZED` | `ANONYMIZED` | Confirm that the record can no longer be linked to the user. |
+| `VERIFY_DATA_FLOW_DISABLED` | `DISABLED` | Confirm that the relevant data flow is inactive. |
+| `VERIFY_RESTORE_BLOCKED` | `BLOCKED` | Confirm that the affected data cannot be restored. |
+
+Do not invent additional phases, operations, or states.
+
+### 6.5 Deletion Decision Rules
+
+- First determine whether `request_text` authorizes deletion. A request for access, correction, export, marketing opt-out, or another non-deletion action is `NOT_APPLICABLE`, even if other fields resemble a deletion case.
+- Resolve both current and historical identifiers for the subject. The request email may match either form.
+- Reconstruct the true state at `audit_at`. Ignore later evidence and do not accept `reported_status` or `reported_result` as proof.
+- Apply `deletion_rules.csv` to every relevant record. Do not delete data that policy requires to be retained, redacted, anonymized, or preserved as a tombstone.
+- For an `ACCOUNT_TOMBSTONE`, preserve the stable subject reference and remove the name, email, phone, email hash, and any other direct identifiers required by the applicable `REDACT` rule.
+- A deletion is `COMPLETE` only when every relevant copy has the required treatment, every required retained record remains available, and no active sync, import, or restore path can recreate prohibited data.
+- For an incomplete case, report every relevant policy violation and recreation risk supported by participant-visible evidence.
+- Within remediation, disable data flows and block unsafe restores before changing dependent records. Process downstream copies before their source records when the dependency requires it.
+- Verification must cover the required final state for each remediated record or process.
+
+### 6.6 Evidence Rules
+
+- Treat activity logs, workflow statuses, and system messages as claims unless the available evidence establishes the resulting state.
+- Use `evidence_files.csv` to locate files, then inspect their contents. Do not infer case membership from the manifest alone.
+- Match evidence through current identifiers, historical identifiers, hashes, resource IDs, system IDs, timestamps, and other grounded links.
+- Images and PDFs are ordinary business artifacts such as invoices, support records, handover documents, and internal product screens. Extract the facts they contain; do not expect an explicit deletion verdict.
+- SQL evidence can contain primary, regional, reporting, or failover replicas. Compare the relevant tables and snapshot time when investigating replication drift.
+- A finding must use the participant-visible `file_id`, `activity_id`, or `audit_id` that proves it.
+- A verification step for a `COMPLETE` case must cite the evidence that proves the current compliant state.
+- Remediation steps and post-remediation verification steps for an `INCOMPLETE` case describe future work and therefore use `evidence_id` as an empty string.
+- Never cite organizer-only truth or an evidence item captured after the case's `audit_at`.
+
+### 6.7 Constraints That Make The Submission Evaluable
+
+- Be runnable from the terminal.
+- Read the provided files from `dataset/`.
+- Write the completed `output.csv` at the repository root.
+- Do not use organizer-only files, hardcoded golden labels, or case-family shortcuts.
+- Keep behavior deterministic where possible, including ordering and JSON serialization.
+- Read secrets from environment variables only.
+- Include clear setup and run instructions in the submitted `README.md`.
+- Ensure a clean run can process all 518 cases and produce exactly one valid row per case.
+
+### 6.8 Evaluation And Token Usage
+
+The submitted `code.zip` must include:
+
+```text
+evaluation/evaluation_report.md
+evaluation/usage_report.md
+```
+
+`evaluation/evaluation_report.md` must contain:
+
+- case-level deletion-status accuracy;
+- step-level and field-level accuracy;
+- sequence accuracy;
+- at least three additional evaluation cases created by the participant; and
+- failures found and improvements made.
+
+`evaluation/usage_report.md` must summarize the final full-dataset run that produced `output.csv`, including:
+
+- model providers and model names;
+- model-call counts;
+- input and output tokens;
+- total and average tokens per request;
+- estimated total and per-request cost; and
+- per-model and overall totals when multiple models are used.
+
+Write the required evaluation metrics, custom cases, and usage details directly in these Markdown files. Never include API keys, credentials, or sensitive configuration values.
+
+### 6.9 Submission Artifacts
+
+The participant submission contains:
+
+| Item | Description |
+|---|---|
+| `code.zip` | Runnable solution, prompts, configuration, `README.md`, and the `evaluation/` reports |
+| `output.csv` | One answer row for every evaluation request |
+| `chat_transcript` | The root `log.txt` file generated by the coding agent |
+| AI interview | Explanation of the architecture, investigation approach, remediation planning, and evaluation |
+
+Do not include `dataset/`, virtual environments, dependency caches, nested archives, API keys, credentials, real personal data, or sensitive configuration in `code.zip`.
+
+### 6.10 Reasonable Entry Points
+
+There is no required language. If using Python, `code/main.py` is a good entry point. If using another language, document the exact setup and run command clearly in the submitted README.
+
+---
+
+## 7. Dataset Development Rules
+
+These rules apply when maintaining or regenerating the challenge dataset itself:
+
+- Generate participant data from private structured truth.
+- Keep every person, organization, identifier, and record fictional. Do not use real personal data.
+- Use realistic and diverse names, identifiers, request language, timestamps, systems, business records, and evidence formats. Avoid repetitive placeholder patterns that reveal synthetic generation.
+- Keep generation deterministic through a fixed seed.
+- Preserve referential and temporal consistency across identities, audit history, activity, evidence, sample answers, and hidden golden answers.
+- Never hand-edit generated participant data or golden output. Update the private truth or generator logic, regenerate, and validate.
+- Do not expose case families, actual statuses, relevant resource lists, expected operations, or golden steps in participant-facing files.
+- After generation or contract changes, run:
+
+  ```text
+  python3 generator/validate_samples.py
+  python3 generator/validate_dataset.py
+  ```
+
+- Review representative PDFs, screenshots, logs, JSON, text records, and SQL snapshots visually or structurally after regeneration.
+
+---
+
+## 8. Cross-Platform And Agent-Compatibility Notes
+
+- Resolve the log path relative to this `AGENTS.md` file, as described in §2. Do not use the platform home directory or hardcode a user path.
+- Write logs in UTF-8 with `\n` line endings.
+- Do not assume bash. Prefer language-native APIs when possible.
+- Keep tool-specific config minimal and point back to this `AGENTS.md`.
+- Resolve dataset and output paths relative to the repository root so the solution works on macOS, Linux, and Windows.
+- If a nested `AGENTS.md` exists, the closest one wins for files inside that sub-project, but §2 and §5 remain global: keep logging to the `log.txt` beside the top-level `AGENTS.md`, not beside the nested one.
+
+---
+
+## 9. Quick Checklist For The Agent
+
+Before responding to any user message, confirm:
+
+- [ ] I have read this file in this session.
+- [ ] I have appended the session-start entry.
+- [ ] I know that the challenge end time is not configured unless an official source has supplied it.
+- [ ] I will append a §5.2 entry after this turn.
+- [ ] I have verified that `tool=` exactly matches the harness or coding agent currently running.
+- [ ] I have recorded the exact runtime model identifier in `model=`; it is never `unknown`, inferred, or generic.
+- [ ] I have confirmed that both the harness name and model name are present and non-empty in the new log entry.
+- [ ] I will not log secrets or real personal data.
+- [ ] I will use only participant-facing files for predictions.
+- [ ] I will preserve the Ghost Data Still Exists deletion-audit and output contract in §6.
+
+</INSTRUCTIONS>
+<environment_context>
+  <cwd>/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26</cwd>
+  <shell>zsh</shell>
+  <current_date>2026-10-25</current_date>
+  <timezone>Europe/Warsaw</timezone>
+  <filesystem><workspace_roots><root>/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26</root></workspace_roots><permission_profile type="managed"><file_system type="restricted"><entry access="read"><special>:root</special></entry><entry access="write"><path>/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26</path></entry><entry access="write"><special>:slash_tmp</special></entry><entry access="write"><special>:tmpdir</special></entry><entry access="read"><path>/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26/.git</path></entry><entry access="read"><path>/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26/.agents</path></entry><entry access="read"><path>/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26/.codex</path></entry><entry access="read"><path>/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26/.aws</path></entry></file_system></permission_profile></filesystem>
+</environment_context>
+
+Agent Response Summary:
+Read the supplied and on-disk AGENTS.md completely, confirmed the repository root and main branch, and recorded a session start. The runtime session metadata identifies model gpt-6.1-sol and the Codex VS Code originator. No challenge deadline is configured.
+
+Actions:
+* Read AGENTS.md, problem_statement.md, participant dataset and requested reference source files.
+* Implemented source modules and tests under code/; updated README.md.
+* Ran pytest, sample benchmark, OCR ablation, full best-effort audit, standalone validation and package replay.
+* Wrote output.csv, code.zip and code/evaluation/ Markdown reports; no external submission.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T00:33:17.241789+00:00] No open page context
+
+User Prompt (verbatim, secrets redacted):
+<external_codex_apps_open_page>{"page_id":null}</external_codex_apps_open_page>
+
+Agent Response Summary:
+Recorded that no external page was visible. Continued using the local attached request and participant repository files.
+
+Actions:
+* Read AGENTS.md, problem_statement.md, participant dataset and requested reference source files.
+* Implemented source modules and tests under code/; updated README.md.
+* Ran pytest, sample benchmark, OCR ablation, full best-effort audit, standalone validation and package replay.
+* Wrote output.csv, code.zip and code/evaluation/ Markdown reports; no external submission.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T00:33:17.241854+00:00] Implement and evaluate deletion audit pipeline
+
+User Prompt (verbatim, secrets redacted):
+
+# Files pasted by the user:
+
+## "# HackerRank Orchestrate October 2026 — Build a Production-Quality AI Deletion …": /home/ubhubert/.codex/attachments/c082a0ba-8a07-4e39-88b3-5318f98af04c/Pasted text.txt
+
+Pasted text contains the user's request.
+
+## My request:
+
+
+
+Agent Response Summary:
+Read the attached request, official specification, both reference implementations, and all participant evidence formats. Implemented exact identity resolution, temporal and replica reconstruction, policy/planning, local neural OCR, optional structured model interpretation, validation, evaluation, tracing and atomic output. Ran 40 passing custom tests and public sample benchmarks: strict status accuracy 24/32, best-effort 29/32, exact rows 8/32. No provider credentials were available; local OCR was executed and API integration was tested with injected doubles only.
+
+Actions:
+* Read AGENTS.md, problem_statement.md, participant dataset and requested reference source files.
+* Implemented source modules and tests under code/; updated README.md.
+* Ran pytest, sample benchmark, OCR ablation, full best-effort audit, standalone validation and package replay.
+* Wrote output.csv, code.zip and code/evaluation/ Markdown reports; no external submission.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T00:33:17.241869+00:00] Authorize best-effort inspection output
+
+User Prompt (verbatim, secrets redacted):
+<send_user_message_question_reply>
+[{"questionItemId":"[\"request_user_input_async\",\"call_d2646d392d5c4cde8dbc55340f0b7c9e\",0]","question":"The supplied data leaves some required resource-to-person links unproven. Should I keep the strict gate that blocks a final CSV when cases remain unresolved, or also provide a clearly marked best-effort CSV for inspection?","answer":"Also produce a best-effort CSV"}]
+</send_user_message_question_reply>
+
+
+Agent Response Summary:
+The user explicitly requested a clearly marked best-effort CSV in addition to the strict gate. Generated and validated root output.csv with 518 rows, documenting 97 provisional COMPLETE labels and 342 primary-account plan-link gaps. Produced measured Markdown reports and code.zip, and replayed the packaged source with a warm OCR cache to reproduce the CSV byte for byte. No external submission, push, production change or dev-server action was performed.
+
+Actions:
+* Read AGENTS.md, problem_statement.md, participant dataset and requested reference source files.
+* Implemented source modules and tests under code/; updated README.md.
+* Ran pytest, sample benchmark, OCR ablation, full best-effort audit, standalone validation and package replay.
+* Wrote output.csv, code.zip and code/evaluation/ Markdown reports; no external submission.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T10:51:40.040600+00:00] Investigate output correctness and missing account evidence
+
+User Prompt (verbatim, secrets redacted):
+We have a structurally valid submission, but **the output quality is not yet sufficient**. Do not package or submit it as final.
+
+I independently inspected the 518-row `output.csv` and found:
+
+- 355 INCOMPLETE, 153 COMPLETE, 10 NOT_APPLICABLE.
+- 342 applicable cases have no `account_service` step.
+- 101 COMPLETE cases have no `account_service` step.
+- 78 COMPLETE cases contain only one `VERIFY_RECORD_PRESENT` step for a `security_service` audit record.
+- Your reported public evaluation is 29/32 status accuracy but only 8/32 exact-row accuracy.
+- You reported 97 provisional completions.
+
+**Our priority is now correctness, not architectural complexity.**
+
+First, inspect `code/evaluation/review_required.md` and the existing evaluation artifacts. Identify the actual root causes of the missing account-resource links. Trace representative failed cases from request identity through historical identifiers, dataset joins, evidence extraction, temporal resolution, and final planning.
+
+Determine whether the records are truly absent, whether evidence is missing, or whether our pipeline fails to associate available evidence with the user. Do not assume every case requires the same account step, and do not invent evidence or resource IDs to satisfy output patterns.
+
+Review the 78 security-only COMPLETE cases. Determine whether there is sufficient evidence to establish deletion completion. A retained security record alone is not general proof of deletion.
+
+Next, improve the evaluation diagnostics. For all 32 public examples, generate a case-by-case comparison showing missing steps, extra steps, wrong operations, resource-ID mismatches, state mismatches, and evidence-ID mismatches. Distinguish status accuracy from exact-row accuracy.
+
+Prioritize improvements that generalize across the full dataset, especially identity resolution, primary-account evidence linkage, and construction of all required verification steps. Do not hardcode public sample answers or case-specific identifiers.
+
+Run ablation tests where useful. Verify whether the live LLM inference integration works if credentials are available, and compare it against the deterministic/OCR baseline. Never claim an LLM-backed result without actually executing it.
+
+After implementing fixes, rerun all tests, public sample evaluations, and all 518 cases. Recalculate the number of missing account links and provisional completions, and provide before/after metrics.
+
+Preserve the current modular architecture unless the root-cause analysis demonstrates that a structural change is necessary. Follow `AGENTS.md`, including logging requirements.
+
+**Do not stop at passing CSV validation. Our goal is accurate, complete, evidence-grounded deletion plans.**
+
+Start by investigating and explaining the missing account-resource links and security-only COMPLETE cases, then fix the underlying retrieval or planning failures.
+
+
+Agent Response Summary:
+Started a source-level investigation of missing account-resource links and security-only completions. Preserved the existing 518-row output and benchmark artifacts for controlled before/after comparison. Will improve retrieval, completeness gates and case-level diagnostics, rerun tests and all requests, and report unresolved evidence honestly without packaging or submitting as final.
+
+Actions:
+* Read AGENTS.md, review_required.md, current pipeline and evaluation artifacts.
+* Preserved baseline artifacts under runs/quality-before/.
+* Checked credential presence without exposing values; no model credentials are available.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T11:21:19.074347+00:00] No open-page context
+
+User Prompt (verbatim, secrets redacted):
+<external_codex_apps_open_page>{"page_id":null}</external_codex_apps_open_page>
+
+Agent Response Summary:
+No external page was visible for this turn. Used only the local repository and participant-facing dataset for the investigation.
+
+Actions:
+* Updated evidence.py, state_resolver.py, planner.py, assessor.py, main.py and validate_output.py.
+* Added ResourceLink schema, custom regression tests, detailed comparison diagnostics and correctness_review.md.
+* Executed pytest, all 32 sample comparisons, 518-case strict run, temporal/link ablations and validation of emitted rows.
+* Updated README.md, OUTPUT_STATUS.md and evaluation reports; no final packaging or external submission.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T11:21:19.074370+00:00] Correctness review results and unresolved evidence
+
+User Prompt (verbatim, secrets redacted):
+We have a structurally valid submission, but **the output quality is not yet sufficient**. Do not package or submit it as final.
+
+I independently inspected the 518-row `output.csv` and found:
+
+- 355 INCOMPLETE, 153 COMPLETE, 10 NOT_APPLICABLE.
+- 342 applicable cases have no `account_service` step.
+- 101 COMPLETE cases have no `account_service` step.
+- 78 COMPLETE cases contain only one `VERIFY_RECORD_PRESENT` step for a `security_service` audit record.
+- Your reported public evaluation is 29/32 status accuracy but only 8/32 exact-row accuracy.
+- You reported 97 provisional completions.
+
+**Our priority is now correctness, not architectural complexity.**
+
+First, inspect `code/evaluation/review_required.md` and the existing evaluation artifacts. Identify the actual root causes of the missing account-resource links. Trace representative failed cases from request identity through historical identifiers, dataset joins, evidence extraction, temporal resolution, and final planning.
+
+Determine whether the records are truly absent, whether evidence is missing, or whether our pipeline fails to associate available evidence with the user. Do not assume every case requires the same account step, and do not invent evidence or resource IDs to satisfy output patterns.
+
+Review the 78 security-only COMPLETE cases. Determine whether there is sufficient evidence to establish deletion completion. A retained security record alone is not general proof of deletion.
+
+Next, improve the evaluation diagnostics. For all 32 public examples, generate a case-by-case comparison showing missing steps, extra steps, wrong operations, resource-ID mismatches, state mismatches, and evidence-ID mismatches. Distinguish status accuracy from exact-row accuracy.
+
+Prioritize improvements that generalize across the full dataset, especially identity resolution, primary-account evidence linkage, and construction of all required verification steps. Do not hardcode public sample answers or case-specific identifiers.
+
+Run ablation tests where useful. Verify whether the live LLM inference integration works if credentials are available, and compare it against the deterministic/OCR baseline. Never claim an LLM-backed result without actually executing it.
+
+After implementing fixes, rerun all tests, public sample evaluations, and all 518 cases. Recalculate the number of missing account links and provisional completions, and provide before/after metrics.
+
+Preserve the current modular architecture unless the root-cause analysis demonstrates that a structural change is necessary. Follow `AGENTS.md`, including logging requirements.
+
+**Do not stop at passing CSV validation. Our goal is accurate, complete, evidence-grounded deletion plans.**
+
+Start by investigating and explaining the missing account-resource links and security-only COMPLETE cases, then fix the underlying retrieval or planning failures.
+
+
+Agent Response Summary:
+Fixed explicit resource-reference traversal, preserved empty replica scopes, added unknown-state future verification, and removed all best-effort completion bypasses. Added case-by-case field diagnostics for all 32 samples and audited all 78 prior security-only completions; all 78 are now withheld. Ran 53 passing tests and all 518 requests: 417 rows emitted and 101 withheld; full-set missing account links remain 342, while public exact rows improved from 8/32 to 9/32 and corrected strict status accuracy is 23/32. Traced 262 cases with no direct account identity observation and 80 temporal exclusions, documented controlled ablations, and verified that no live LLM credentials are configured. Preserved the old output.csv and code.zip as retired baseline artifacts; produced no new final package or submission.
+
+Actions:
+* Updated evidence.py, state_resolver.py, planner.py, assessor.py, main.py and validate_output.py.
+* Added ResourceLink schema, custom regression tests, detailed comparison diagnostics and correctness_review.md.
+* Executed pytest, all 32 sample comparisons, 518-case strict run, temporal/link ablations and validation of emitted rows.
+* Updated README.md, OUTPUT_STATUS.md and evaluation reports; no final packaging or external submission.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T12:05:37.509585+00:00] Apply documented evidence boundaries and verify official snapshot
+
+User Prompt (verbatim, secrets redacted):
+<send_user_message_question_reply>
+[{"questionItemId":"[\"request_user_input_async\",\"call_517161479569468890b29a1b906bd692\",0]","question":"Do you have corrected participant-facing identity/resource mappings, or an official clarification about manifest capture times? The remaining gaps include identifier-free 404 records with no subject join key, and account links captured after audit_at.","answer":"No. I checked the official October repository and found no corrected participant-facing identity/resource mappings or maintainer clarification about manifest capture times.\nThese exact problems have been independently raised in GitHub issues:\n- [https://github.com/interviewstreet/hackerrank-orchestrate-october26/issues/19](https://github.com/interviewstreet/hackerrank-orchestrate-october26/issues/19)\n- [https://github.com/interviewstreet/hackerrank-orchestrate-october26/issues/24](https://github.com/interviewstreet/hackerrank-orchestrate-october26/issues/24)\nIssue #24 explicitly discusses anonymous 404s, missing ownership links, after-cutoff evidence, and incomplete evidence coverage.\nProceed using the documented contract:\n1. Do not treat identifier-free 404 records as subject-specific proof of deletion.\n2. Do not use evidence captured after audit_at to establish state at that cutoff unless the needed fact is independently supported by earlier admissible evidence.\n3. Do not invent missing account/resource mappings or citations.\n4. Distinguish internally between confirmed absence, confirmed presence, and unresolved evidence. Preserve the required three-status output format without misrepresenting unsupported conclusions as verified facts.\n5. Continue improving only the mappings and checks supported by participant-facing evidence.\n6. Document irreducible dataset gaps, affected cases, assumptions, and evaluation limitations in the reports.\nDo not spend more effort forcing unprovable account links simply to match sample answers. Prioritize demonstrably correct improvements and a reproducible, honest final submission.\nCheck the official repository for any newer dataset correction before final generation."}]
+</send_user_message_question_reply>
+
+
+Agent Response Summary:
+Checked the official main branch, participant-file Git blob hashes, and issues 19 and 24 with their comments; all 103 participant files match the checkout and no applicable correction or maintainer clarification was found in the fetched sources. Kept issue content out of predictions and documented the verified revision and evidence boundaries. Fixed archive-screen metadata being treated as restore authorization, preserved independently supported earlier facts, and prevented unknown replica state from being masked by a newer compliant read. Added internal assessments for all 518 cases while preserving the three-status CSV vocabulary; the current strict run emits 416 work-product rows and withholds 102 unresolved cases. All 65 tests pass, public results remain 23/32 statuses and 9/32 exact rows, and no final CSV, package or external submission was produced.
+
+Actions:
+* Read official GitHub main metadata, participant tree and issue threads using read-only connected tools.
+* Updated evidence.py, state_resolver.py and main.py; added restore-uncertainty and trace-coverage regressions.
+* Reran pytest, public evaluation and all 518 requests; regenerated evidence-gap and usage reports.
+* Added code/evaluation/official_repository_check.md and retained machine-readable hashes in runs/official-check/.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+
+## [2026-10-25T12:36:37.488192+00:00] Diagnose benchmark regression and classify all withheld cases
+
+User Prompt (verbatim, secrets redacted):
+# Files pasted by the user:
+
+## "We have 65 passing tests, but the next priority is understanding prediction acc…": /home/ubhubert/.codex/attachments/c21e8bbe-08e8-4105-89b8-97e8ee16a17e/Pasted text.txt
+
+Pasted text contains the user's request.
+
+## My request:
+
+Attached request (verbatim):
+We have 65 passing tests, but the next priority is understanding prediction accuracy and the 102 withheld cases.
+
+**Do not implement another architecture, install a framework, or package a submission yet.**
+
+Perform the following targeted evaluation and debugging work using the existing project.
+
+### 1. Investigate the public benchmark regression
+
+Our earlier implementation achieved 29/32 correct statuses and 8/32 exact rows. The current implementation achieves 23/32 statuses and 9/32 exact rows.
+
+Compare both implementations or saved evaluation artifacts where available.
+
+For all 32 sample cases, produce a diagnostic table containing:
+
+- Case ID and expected status
+- Previous status prediction, if available
+- Current status prediction
+- Missing canonical steps
+- Extra predicted steps
+- Incorrect operations, states, resource IDs, and evidence IDs
+- Exact reason for each mismatch
+- Whether the expected answer is actually supported by participant-facing evidence
+
+Identify which status regressions resulted from fixing unsupported inferences and which resulted from genuine implementation defects.
+
+Do not reintroduce fabricated evidence merely to improve benchmark accuracy.
+
+### 2. Root-cause the 102 withheld cases
+
+Generate a machine-readable and human-readable classification of all withheld cases, grouping them by:
+
+- Missing subject-to-resource ownership links
+- Account absence not demonstrable
+- Evidence captured after `audit_at`
+- Unknown restore/blocking state
+- Conflicting observations
+- Incomplete snapshot coverage
+- Missing data or unsupported inference
+- Other actual causes
+
+Report the count and case IDs in every category.
+
+Identify which cases might be resolved by better extraction, indexing, correlation, or planner logic versus those that genuinely require missing source data or official clarification.
+
+Do not assume every withheld case has the same cause.
+
+### 3. Test critical evidence-integrity scenarios
+
+Create or run isolated regression tests covering:
+
+- An anonymous 404 without a subject join key must not establish subject-specific absence.
+- A resource-to-user link first observed after `audit_at` must not be backdated.
+- A complete, explicitly scoped SQL snapshot may support a negative observation; a partial JSON export may not.
+- Archive existence must not prove restore permission or restore blocking.
+- A correctly redacted tombstone must not prove that the primary account is absent.
+- A deletion-worker success claim must not override contradictory observed resource state.
+- A synchronization event that recreates a deleted record must affect the reconstructed state if it occurred before `audit_at`.
+- A retention rule must not automatically imply deletion completeness.
+
+Include public examples such as case_01, case_27, and case_31 where relevant, plus a separate review of case_55's restore evidence. Do not hardcode sample-specific answers.
+
+### 4. Measure actual step-level accuracy
+
+Status accuracy alone is insufficient.
+
+For the 32 public cases, calculate:
+
+- Exact-row accuracy
+- Step precision, recall, and F1
+- Missing and extra findings
+- Missing and extra remediation steps
+- Missing and extra verification steps
+- Operation/state correctness
+- Resource matching accuracy
+- Evidence citation validity and accuracy
+- Sequence/order correctness
+
+Show the most frequent error categories and which generalizable fixes would improve them.
+
+### 5. Validate the entire evidence pipeline
+
+Confirm that all 103 participant files are loaded and processed as intended.
+
+Distinguish successful file parsing from successful attribution to a user.
+
+Report the number of observations with valid provenance, valid subject links, valid resource links, and cutoff-admissible timestamps.
+
+Check that OCR failures, empty SQL tables, partial inventories, and conflicting replicas cannot silently produce confident conclusions.
+
+### 6. Evaluate the LLM integration separately
+
+We have not supplied an OpenAI API key.
+
+Verify that the current 23/32 and 9/32 results are from the deterministic/local-OCR path.
+
+Verify whether the optional OpenAI adapter is connected to the actual prediction pipeline or merely implemented.
+
+Do not claim a live LLM result from mocked tests. If credentials are unavailable, prepare a reproducible evaluation command but do not block the deterministic investigation.
+
+Identify specific ambiguity classes where an LLM could help and where it cannot compensate for missing evidence.
+
+### 7. Resolve the submission-coverage decision
+
+The official challenge requires exactly 518 output rows, but the strict runner only emits 416.
+
+Preserve the current strict, evidence-grounded behavior.
+
+Analyze whether any of the 102 withheld cases can be resolved legitimately from existing evidence. Do not invent account mappings, restore states, or fabricated citations.
+
+Document the remaining unavoidable tradeoff between strict evidentiary correctness and the mandatory 518-row output contract.
+
+Do not silently publish guessed COMPLETE decisions. Do not change the publication policy without explaining the proposed behavior and its limitations.
+
+### Deliverable
+
+Produce a concise diagnostic report answering:
+
+1. Why did status accuracy drop from 29/32 to 23/32?
+2. Why is exact-row accuracy only 9/32?
+3. What specifically blocks each of the 102 cases?
+4. Which issues can we actually fix with code?
+5. Which problems are genuinely underdetermined by the participant dataset?
+6. What is the highest-value next engineering improvement?
+
+After the analysis, fix only demonstrable implementation defects, run the full regression suite, and report before/after accuracy and coverage.
+
+Follow AGENTS.md. Do not submit or push anything externally.
+
+Agent Response Summary:
+Compared all 32 public examples with the saved best-effort and strict predictions, tracing unsupported ownership, state, citation and time assumptions independently of sample labels. Classified all 102 withheld cases in Markdown, JSON and CSV, and audited all 103 participant files with separate parsing, provenance, attribution and cutoff metrics. Reproduced and fixed two evidence-integrity defects: unscoped SQL tables marked complete, and invented resource IDs accepted through negative inventories; preserved the existing modular architecture and publication gate. All 73 tests pass; public status/exact-row accuracy remains 23/32 and 9/32, step precision/recall/F1 is 96.62/74.09/83.87 percent, and the full run remains 416 emitted with 102 withheld, byte-identical to the strict baseline. No additional case was legitimately resolved, no live LLM inference occurred, and retired output/archive hashes are unchanged; nothing was packaged, pushed or submitted.
+
+Actions:
+* Updated code/evidence.py and code/validate_output.py with bounded SQL-scope and resource-anchor checks.
+* Added eight isolated regressions in code/tests/test_evidence_integrity.py, including actual prediction-pipeline adapter wiring.
+* Extended public metrics with step F1 and model usage events; added code/evaluation/accuracy_review.py and reproducible machine-readable diagnostics under runs/accuracy-review/.
+* Ran full pytest, all 32 sample cases and all 518 evaluation requests; independently validated resolved rows, citations, classification coverage and before/after output equality.
+* Updated README.md, evaluation reports, usage details and review-required index; verified git diff --check and preserved root artifact hashes.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T12:38:19.285859+00:00] Assess submission readiness
+
+User Prompt (verbatim, secrets redacted):
+Is it ready to submit now?
+
+Agent Response Summary:
+Checked the latest run summary, publication flag and root output hash against the output-status document. The project is not ready: the strict run emits 416 of the mandatory 518 rows and withholds 102, public exact-row accuracy is 9/32, and root output.csv/code.zip remain retired baseline artifacts. Passing 73 tests does not establish prediction completeness. Provided the official challenge/submission URL without packaging or submitting anything.
+
+Actions:
+* Read runs/accuracy-review/summary.json, latest full run.json and OUTPUT_STATUS.md; verified retired output hash.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T12:53:36.022113+00:00] Build explicit competition export and submission artifacts
+
+User Prompt (verbatim, secrets redacted):
+The strict pipeline resolves 416/518 cases and withholds 102. Preserve that strict mode, but create a separate, explicitly documented competition-export mode.
+
+Requirements:
+
+1. Produce all 518 rows required by HackerRank.
+2. Retain evidence-grounded predictions and steps wherever available.
+3. For unresolved cases, never fabricate evidence IDs, resource ownership, observations, or verified COMPLETE conclusions.
+4. Where deletion is authorized but completion cannot be established, use a clearly documented conservative INCOMPLETE fallback, retaining only supported steps. Acknowledge that this is an unverified fallback and may not match the canonical answer.
+5. Use NOT_APPLICABLE only for requests confidently determined not to authorize deletion.
+6. Validate the complete output and exact ordering.
+7. Rebuild code.zip with executable source, README, and both required evaluation reports.
+8. Ensure usage and accuracy reports truthfully disclose the fallback and absence of live OpenAI calls.
+9. Verify code.zip, output.csv, and log.txt exist, then report their exact paths.
+10. Do not submit externally on my behalf.
+
+Do not spend time trying to repair unresolvable dataset gaps. Prioritize delivering a valid, honest best-effort submission.
+
+Agent Response Summary:
+Added an explicit --publication competition-export mode while preserving strict mode as the default; the strict rerun still emits the identical 416 rows and leaves existing output untouched. Generated all 518 rows, retaining strict predictions and adding 102 authorized unverified INCOMPLETE fallbacks with supported future checks, blank future citations and a separate provenance ledger; no fallback claims verified COMPLETE or fabricates ownership, evidence, findings or destructive actions. Full export counts are 456 INCOMPLETE, 52 COMPLETE and 10 NOT_APPLICABLE; all 82 tests pass, and public competition status/exact-row accuracy is 23/32 and 9/32, with step precision/recall/F1 87.20/74.09/80.11 percent. Regenerated README and both required reports, checked the unchanged official main revision, independently validated the CSV, rebuilt code.zip and executed its extracted source to reproduce output.csv byte-for-byte. Zero live OpenAI calls occurred, all artifacts were verified, and nothing was submitted or pushed externally.
+
+Actions:
+* Added code/competition_export.py and nine focused fallback regressions; updated main.py, validator and evaluator with explicit publication metadata and ledger-scoped validation exceptions.
+* Ran pytest (82 passing), both public evaluation modes, full competition export, independent full validation and a strict non-clobber regression on all 518 cases.
+* Updated README, OUTPUT_STATUS.md, current evaluation/usage reports and all-fallback Markdown disclosure; retained machine-readable provenance in runs/competition/full/fallbacks.json.
+* Rebuilt source-only code.zip, checked required report paths, excluded datasets/caches/credentials/archives, and verified extracted-source output equality.
+* Checked official main via read-only GitHub fetch: 0eddbbd33f682eae0a2770d67412af8a3cf4af20, unchanged from the previously checked revision.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T12:57:29.619723+00:00] Recovered original pasted user prompt
+
+User Prompt (verbatim, line endings normalized to LF):
+# HackerRank Orchestrate October 2026 — Build a Production-Quality AI Deletion Audit Agent
+
+## Your Role
+
+Act as a senior AI engineer, software architect, and evaluation engineer.
+
+We are participating in **HackerRank Orchestrate October 2026: Ghost Data Still Exists**.
+
+Our objective is to build the strongest possible AI-powered deletion audit system for this challenge. Prioritize evidence completeness, correct decisions, exact canonical output, reproducibility, and measurable accuracy.
+
+Do not simply generate a working script. Think critically about the problem, study reference implementations, investigate the dataset, design an appropriate architecture, implement it, and evaluate it rigorously.
+
+I want to understand the engineering decisions, so briefly explain important architectural tradeoffs and why you selected each approach. However, don't substitute explanations for implementation. Execute the work, run tests, diagnose failures, and improve the system.
+
+We should aim for a well-engineered submission that I can confidently explain during the HackerRank AI interview.
+
+---
+
+## 1. First: Read the Official Contract
+
+You are running inside the October repository root.
+
+Official repository:
+
+https://github.com/interviewstreet/hackerrank-orchestrate-october26
+
+Before making changes:
+
+1. Read `AGENTS.md` completely and follow its session logging requirements.
+2. Read `problem_statement.md` completely.
+3. Inspect the entire repository structure.
+4. Inspect all participant-facing files in `dataset/`.
+5. Inspect `dataset/sample_output.csv` to understand the exact canonical output.
+6. Inspect `code/` and any existing implementation before modifying it.
+
+Launch and operate from the repository root. Ensure `log.txt` follows `AGENTS.md`, including the actual harness and runtime model identifiers obtained from the environment. Never invent model identifiers or timestamps.
+
+The official problem statement and supplied deletion rules are authoritative. If anything in this prompt conflicts with those files, follow the official contract and explain the difference.
+
+Only use participant-facing dataset files for predictions. Never use hidden answers, organizer-only data, generator internals, or hardcoded case-specific predictions.
+
+## 2. Study Two Previous HackerRank Orchestrate Architectures
+
+These are important architectural references. Inspect their actual implementations, not just their README files.
+
+### Reference A — August 2026
+
+https://github.com/GodVilan/Hackerrank-Orchestrate-aug26/tree/main
+
+Study these modules:
+
+- `code/main.py`
+- `code/data_layer.py`
+- `code/features.py`
+- `code/evidence.py`
+- `code/router.py`
+- `code/gates.py`
+- `code/finalize.py`
+- `code/schema.py`
+- `code/prompts.py`
+- `code/vision.py`
+- `code/evaluation/main.py`
+- `code/evaluation/evaluation_report.md`
+- `code/README.md`
+- `ERRATA.md`
+
+Understand its central architectural principle:
+
+**The model perceives; the code decides.**
+
+The August solution uses a custom Python orchestration pipeline rather than LangChain or smolagents.
+
+Its pipeline is conceptually:
+
+Input data → deterministic feature extraction → multimodal preparation → evidence candidate retrieval → structured LLM inference → deterministic decision rules → finalization → output validation.
+
+Important patterns to study:
+
+**A. Evidence grounding**
+
+The system constructs an admissible evidence candidate pool before asking the model to select evidence IDs.
+
+It then validates the model's selections against that pool in code.
+
+Relevant function:
+
+`evidence.enforce_evidence(selected_ids, pool)`
+
+Our October implementation should similarly prevent invented `file_id`, `activity_id`, or `audit_id` references.
+
+However, October requires exhaustive record discovery, so do not blindly reuse August's evidence selection limits.
+
+**B. Separation of interpretation and decision**
+
+August's model returns semantic classifications. A deterministic precedence ladder determines the final routing action.
+
+For October, the model should primarily interpret deletion intent and ambiguous evidence. Resource state reconstruction, policy enforcement, and step serialization should be controlled and independently verifiable.
+
+**C. Strict schemas**
+
+The model's intermediate output has a defined contract. Final output fields are created downstream.
+
+**D. Deterministic evaluation and ablation**
+
+August compares different configurations rather than merely assuming the chosen architecture is best.
+
+**E. Documented limitations**
+
+Study its evaluation report and `ERRATA.md`.
+
+The author reported that some deterministic decision rules did not improve local benchmark accuracy. Temperature zero also did not guarantee identical model outputs.
+
+Do not assume additional rules, auditors, or model calls automatically improve accuracy.
+
+### Reference B — June 2026
+
+https://github.com/CYCLOP5/hackerrank-orchestrate-jun26/tree/main
+
+Study:
+
+- `code/claim_verifier/pipeline.py`
+- `code/claim_verifier/vision.py`
+- `code/claim_verifier/models.py`
+- `code/claim_verifier/resolver.py`
+- `code/claim_verifier/rules.py`
+- `code/claim_verifier/auditor.py`
+- `code/claim_verifier/model_client.py`
+- `code/claim_verifier/tracing.py`
+- `code/claim_verifier/evaluation.py`
+- `code/claim_verifier/runner.py`
+
+June's central design separates the model-generated `VisionAssessment` from the final deterministic `ClaimDecision`.
+
+A key pattern is:
+
+```python
+vision_call = await adapters.vision_judge.judge(
+    claim=claim,
+    evidence_rules=evidence_rules,
+    claimed_focus=claimed_focus,
+)
+
+decision = resolve_claim_decision(
+    claim,
+    vision_call.assessment,
+    history,
+)
+```
+
+Study the implementation for the exact interface.
+
+Extract useful lessons about:
+
+- Typed intermediate assessments using Pydantic.
+- Dependency injection through adapters and protocols.
+- Model-independent business logic.
+- Explicit model clients, timeout handling, and retries.
+- Optional secondary LLM auditing.
+- Async bounded concurrency.
+- Per-case tracing and reproducibility.
+- Comparing predictions against sample ground truth.
+
+**Important:** These repositories are references, not templates to copy blindly. Their tasks differ significantly from October.
+
+After inspecting both, write a short architecture comparison explaining which patterns are relevant and which are not.
+
+Do not install LangChain, LangGraph, or smolagents merely because this is called an AI agent challenge.
+
+A custom Python orchestration pipeline is a valid and potentially preferable solution. Use an agent framework only if it delivers a measurable benefit for October's specific requirements.
+
+---
+
+## 3. Understand October's Actual Problem
+
+We must build a system that determines whether requested personal data deletion is genuinely complete.
+
+A workflow may report `COMPLETE` while data still exists in:
+
+- Primary and secondary databases.
+- Regional, reporting, and failover replicas.
+- Search indexes and caches.
+- Customer support messages and attachments.
+- Analytics and telemetry records.
+- Marketing profiles and exports.
+- Application or email-delivery logs.
+- Archives and backups.
+- Active synchronization, import, or restore processes.
+
+The system must identify current and historical user identifiers, reconstruct resource states as of `audit_at`, apply the supplied policy, and generate the required ordered findings, remediation, and verification steps.
+
+The output status is one of:
+
+- `COMPLETE`
+- `INCOMPLETE`
+- `NOT_APPLICABLE`
+
+Do not trust `reported_status`, or a successful operation result, as authoritative proof of the actual resource state.
+
+`NOT_APPLICABLE` means the user did not authorize deletion. No deletion audit plan should be generated in that case.
+
+A deletion may be complete even when policy-required retained records remain, provided they satisfy the permitted retention and redaction requirements.
+
+Pay particular attention to account tombstones: a stable internal `user_id` may remain while prohibited direct identifiers must be removed.
+
+## 4. Understand the Dataset Before Designing the Final Architecture
+
+Available participant-facing data includes:
+
+```text
+dataset/
+├── deletion_requests.csv
+├── sample_deletion_requests.csv
+├── sample_output.csv
+├── user_identities.csv
+├── user_audit_log.csv
+├── system_activity.csv
+├── deletion_rules.csv
+├── evidence_files.csv
+├── output.csv
+└── evidence/
+    ├── databases/
+    ├── documents/
+    ├── images/
+    ├── logs/
+    └── records/
+```
+
+Start with a thorough dataset reconnaissance.
+
+Produce a concise report covering:
+
+1. Record counts, columns, missing values, and available timestamps.
+2. Counts and types of evidence files.
+3. Structure of SQL snapshots and relevant tables.
+4. Number and structure of database replicas.
+5. How evidence files reference identities, systems, and resources.
+6. How current and historical identifiers appear across sources.
+7. Examples of contradictory evidence or later data re-creation.
+8. Number of files requiring genuine visual or semantic interpretation.
+9. Whether different files contain overlapping evidence.
+10. Cases represented in the 32 public reference answers.
+
+Inspect representative samples from every format.
+
+Use Python and structured parsers wherever they can extract reliable facts. For example, SQL captures are SQLite-compatible and should be queried directly when appropriate.
+
+For PDFs, extract text and inspect page images only when the layout or visual content requires it. For JSON and log files, preserve their structured fields where possible.
+
+Do not send entire SQL databases or all evidence files indiscriminately to an LLM.
+
+Do not assume the evidence manifest is case-specific. It is a global manifest that requires content-based association.
+
+**Before finalizing the architecture, identify what information requires model interpretation and what can be extracted deterministically.**
+
+## 5. Proposed Architecture — Adapt Based on Evidence
+
+Use a modular, problem-specific Python architecture inspired by June and August.
+
+A possible structure:
+
+```text
+code/
+├── main.py
+├── config.py
+├── schema.py
+├── data_layer.py
+├── identity.py
+├── evidence.py
+├── model_client.py
+├── assessor.py
+├── state_resolver.py
+├── policy.py
+├── planner.py
+├── tracing.py
+├── writer.py
+├── validate_output.py
+├── extractors/
+│   ├── databases.py
+│   ├── documents.py
+│   ├── images.py
+│   ├── logs.py
+│   └── records.py
+└── evaluation/
+    ├── main.py
+    ├── evaluation_report.md
+    └── usage_report.md
+```
+
+This is an architectural suggestion, not a compulsory file structure. Combine or split modules based on actual complexity. Avoid unnecessary abstraction and excessive boilerplate.
+
+The important requirement is separation of responsibilities.
+
+### A. Data layer
+
+Load source files and construct reusable indexes.
+
+Support deterministic lookups for users, historical identifiers, resources, systems, activity events, and evidence references.
+
+Avoid repeatedly scanning large files for every request.
+
+### B. Identity resolver
+
+Resolve current and historical identifiers using:
+
+`user_identities.csv`
+
+`user_audit_log.csv`
+
+Inputs can include current emails, historical emails, email hashes, phone numbers, and stable user IDs.
+
+Handle identity changes, ambiguous matches, and unrelated users with similar identifiers.
+
+Avoid relying exclusively on literal email matching.
+
+Historical identifiers must only be associated with the correct user and relevant time periods.
+
+### C. Evidence ingestion and extraction
+
+Normalize evidence from multiple formats into an internal representation with provenance.
+
+A possible initial schema is:
+
+```python
+class EvidenceObservation(BaseModel):
+    system_id: str
+    resource_id: str
+    data_category: str
+    observed_state: str
+    observed_at: datetime
+    evidence_id: str
+    related_identifiers: list[str]
+```
+
+Treat this as a starting concept, not a final schema.
+
+We may need additional fields for:
+
+- Capture time versus event time.
+- Source replica or system.
+- Field-level PII exposure.
+- Policy-required retained data.
+- Active data flows.
+- Backup restore risk.
+- Confidence or uncertainty.
+- Evidence authority and completeness.
+- Links between evidence observations.
+- Explicit proof of absence.
+- Whether the observation is a snapshot, event, or reported claim.
+
+Preserve sufficient source information to audit every conclusion.
+
+A missing record from a partial snapshot does not necessarily prove absence from the entire system.
+
+### D. Model-powered evidence interpretation
+
+This is where AI should provide genuine value.
+
+Potential tasks include:
+
+- Multilingual deletion intent understanding.
+- Interpreting screenshots or scanned documents.
+- Extracting structured facts from ambiguous documents.
+- Identifying personally identifying fields in support messages.
+- Recognizing whether an unstructured record still exposes a user.
+- Resolving semantic ambiguity in logs or historical context.
+
+Do not ask the model to compute joins or compare timestamps when Python can do it exactly.
+
+Use structured model outputs validated with Pydantic.
+
+The model must not invent resource IDs, evidence IDs, observations, timestamps, or unsupported facts.
+
+Where possible, supply a bounded candidate evidence set and enforce grounding independently after inference.
+
+If evidence is ambiguous, the model should express uncertainty rather than fabricate a confident conclusion.
+
+### E. Temporal state resolver
+
+This is a critical October-specific module.
+
+For every relevant resource, reconstruct its actual state at `audit_at`.
+
+Consider:
+
+- Snapshot capture timestamps.
+- Event timestamps.
+- Primary and replica state.
+- Deletion followed by synchronization.
+- Re-created records.
+- Failed, delayed, or incomplete operations.
+- Backup and restore status.
+- Conflicting evidence.
+- Source authority and snapshot completeness.
+
+Never use evidence created after a case's `audit_at` to determine that case's status.
+
+Differentiate between a workflow's claim and observed system state.
+
+If a resource was deleted and subsequently recreated before `audit_at`, report its current state correctly.
+
+Explicitly test temporal ordering and replica drift.
+
+### F. Policy resolver
+
+Load policy requirements from `deletion_rules.csv`.
+
+Do not hardcode assumptions that contradict supplied rules.
+
+Handle the relevant categories, including:
+
+- `USER_PROFILE` → DELETE
+- `SECONDARY_IDENTIFIER` → DELETE
+- `SEARCH_INDEX_ENTRY` → DELETE
+- `CACHE_ENTRY` → DELETE
+- `SUPPORT_MESSAGE` → conditional REDACT
+- `SUPPORT_ATTACHMENT` → conditional DELETE
+- `ANALYTICS_PROFILE` → conditional ANONYMIZE
+- `PRODUCT_TELEMETRY` → conditional ANONYMIZE
+- `USER_EXPORT` → DELETE
+- `MARKETING_PROFILE` → DELETE
+- `EMAIL_DELIVERY_LOG` → conditional REDACT
+- `SECURITY_AUDIT_LOG` → conditional RETAIN
+- `LEGAL_HOLD_RECORD` → conditional RETAIN
+- `BACKUP_ARCHIVE` → conditional RETAIN with safe restore handling
+- `ACCOUNT_TOMBSTONE` → conditional REDACT
+
+Use the exact conditions supplied in the dataset; the summary above is not a replacement for the policy file.
+
+Business rules should be independently testable without an LLM call.
+
+### G. Remediation and verification planner
+
+Generate the complete sequence required by the challenge.
+
+Use evidence-backed findings and deterministic planning where possible.
+
+For incomplete cases, include all relevant findings, remediation actions, and post-remediation verification checks, including checks that policy-required records remain available.
+
+For complete cases, include only verification steps backed by existing evidence.
+
+For non-applicable cases, return `[]`.
+
+Do not hallucinate missing records or future remediation actions.
+
+### H. Writer and validator
+
+Strictly enforce the canonical HackerRank output format and ordering.
+
+Do not allow model-generated JSON strings to be written directly without validation.
+
+---
+
+## 6. Exact Output Contract
+
+The root-level `output.csv` must contain:
+
+```text
+case_id,deletion_status,steps_json
+```
+
+There must be exactly **518 data rows**, sorted by `case_id`.
+
+`steps_json` must be a valid JSON array.
+
+Each step must contain exactly:
+
+```json
+{
+  "step_no": 1,
+  "phase": "FINDING",
+  "system_id": "account_service",
+  "resource_id": "account_005",
+  "operation": "REPORT_REMAINING_RECORD",
+  "state": "PRESENT",
+  "evidence_id": "evidence_01"
+}
+```
+
+Allowed findings, in order:
+
+1. `REPORT_REMAINING_RECORD`
+2. `REPORT_EXPOSED_PII`
+3. `REPORT_ACTIVE_DATA_FLOW`
+4. `REPORT_RESTORE_RISK`
+
+Allowed remediation operations, in order:
+
+1. `DISABLE_DATA_FLOW`
+2. `BLOCK_RESTORE`
+3. `DELETE_RECORD`
+4. `REDACT_RECORD`
+5. `ANONYMIZE_RECORD`
+
+Allowed verification operations, in order:
+
+1. `VERIFY_RECORD_ABSENT`
+2. `VERIFY_RECORD_PRESENT`
+3. `VERIFY_RECORD_REDACTED`
+4. `VERIFY_RECORD_ANONYMIZED`
+5. `VERIFY_DATA_FLOW_DISABLED`
+6. `VERIFY_RESTORE_BLOCKED`
+
+The operations must use the exact corresponding states defined in `problem_statement.md`.
+
+Sort steps first by phase order, then operation order within the phase, then by `system_id` and `resource_id` ascending.
+
+Step numbers must start at 1 and increase consecutively after sorting.
+
+For `COMPLETE`:
+
+- Only verification steps.
+- Every step must cite valid existing evidence establishing the required state at `audit_at`.
+
+For `INCOMPLETE`:
+
+- Include findings, all required remediation, and all required verification steps.
+- Findings must cite valid evidence.
+- Proposed remediation and future verification steps must have `evidence_id=""`.
+
+For `NOT_APPLICABLE`:
+
+- `steps_json=[]`.
+
+Implement validation covering all of these invariants.
+
+The validator should also check reference validity, duplicate steps, unknown enum values, missing cases, output columns, and inappropriate evidence references.
+
+Don't silently turn an unresolved case into `COMPLETE`.
+
+---
+
+## 7. Model Integration Strategy
+
+Start by testing a custom Python orchestration pipeline using direct model SDK integration and typed outputs.
+
+Do not assume a fully autonomous agent is required.
+
+However, do not build a nominal "AI agent" where the LLM has no meaningful responsibility merely to satisfy the challenge wording.
+
+Evaluate which model-based tasks materially improve accuracy.
+
+Consider two approaches:
+
+**Approach A — Fixed structured inference pipeline**
+
+Python determines which evidence to retrieve and when to invoke an LLM/VLM.
+
+The model returns typed evidence assessments.
+
+Python performs state reconstruction, policy resolution, and output planning.
+
+**Approach B — Bounded investigative agent**
+
+For ambiguous cases, the model may request additional evidence through safe, predefined read-only tools.
+
+Limit iterations and tool calls. Validate retrieved evidence and preserve full provenance.
+
+Only implement Approach B if its flexibility addresses a demonstrated failure of Approach A.
+
+Use configuration for model providers, exact model names, limits, timeouts, retries, and concurrency.
+
+Use environment variables for secrets. Never hardcode API keys.
+
+Add caching keyed by relevant input content, prompt/schema versions, model configuration, and inference settings.
+
+Track every model call, including retries and cache hits.
+
+Prefer selective VLM use over processing every file through a costly multimodal model.
+
+Use actual evaluation results to select the final configuration.
+
+## 8. Evaluation Must Be a First-Class Component
+
+The public dataset includes:
+
+`sample_deletion_requests.csv`
+
+`sample_output.csv`
+
+These 32 labeled sample cases are our initial benchmark.
+
+Build a real evaluation pipeline that runs predictions on the sample requests and compares them with the reference answers.
+
+Do not train on or hardcode those answers.
+
+Evaluate at least:
+
+**Case-level metrics**
+
+- Status accuracy.
+- Precision, recall, and F1 for applicable labels.
+- Confusion matrix.
+
+**Row and step-level metrics**
+
+- Exact row match.
+- Step precision and recall.
+- Operation correctness.
+- `system_id` and `resource_id` accuracy.
+- State accuracy.
+- Evidence ID accuracy.
+- Missing and extra steps.
+
+**Sequence metrics**
+
+- Exact ordered step-array accuracy.
+- Phase ordering.
+- Operation ordering.
+- Step numbering correctness.
+
+**Diagnostic metrics**
+
+- Accuracy by evidence modality.
+- Accuracy by data category.
+- Accuracy for historical identity changes.
+- Accuracy for replica and time-dependent cases.
+- Accuracy for retention and tombstone cases.
+
+Only report subgroup metrics when enough labeled cases exist. Distinguish measured results from untested behavior.
+
+Create at least three additional custom tests. Prefer more.
+
+Important cases to include:
+
+1. A message that does not authorize deletion.
+2. A historical email change with an unrelated similar identifier.
+3. A record deleted and later recreated by synchronization.
+4. Divergent primary and replica snapshots.
+5. A properly redacted tombstone retaining only permitted identifiers.
+6. An active backup restore path.
+7. A policy-required retained security or legal-hold record.
+8. Evidence captured after `audit_at`, which must not affect the decision.
+
+Test individual modules using pytest where practical.
+
+Include regression tests for every discovered failure.
+
+Use controlled ablation experiments to understand whether an LLM, secondary auditor, or agent loop improves the output. Do not add components simply because they sound sophisticated.
+
+Do not overfit the 32 public reference cases or introduce case-ID-specific rules.
+
+## 9. Failure Handling and Observability
+
+Follow the strongest engineering practices from June and August.
+
+Implement:
+
+- Fail-fast validation for missing dependencies and invalid input.
+- Explicit exceptions and meaningful diagnostic messages.
+- Model request retries with bounded exponential backoff.
+- Safe and bounded concurrency where useful.
+- Structured model response validation.
+- Evidence reference enforcement.
+- Deterministic output serialization.
+- Atomic output writing or reliable resumable generation.
+- Caching and reproducible runs.
+- Minimal structured tracing without leaking secrets or unnecessary personal data.
+- A final standalone output validator.
+
+If a model returns invalid evidence IDs, never silently accept them.
+
+If an evidence file cannot be parsed, record the failure. Do not pretend it was successfully inspected.
+
+If a model call fails, do not fabricate the missing semantic observations or report a verified complete deletion.
+
+Choose and document a safe failure strategy compatible with the required three-status output contract.
+
+Track extraction coverage and unresolved evidence so that a completed 518-row file is not mistaken for a fully investigated dataset.
+
+## 10. Required Reports
+
+Create:
+
+```text
+code/evaluation/evaluation_report.md
+code/evaluation/usage_report.md
+```
+
+`evaluation_report.md` must include:
+
+- Evaluation methodology.
+- Case, row, field, and step-level metrics.
+- Sequence accuracy.
+- At least three custom evaluation cases.
+- Actual observed failures and their causes.
+- Improvements implemented.
+- Before/after comparisons where available.
+- Limitations and untested scenarios.
+- Differences between deterministic and model-assisted approaches when evaluated.
+
+`usage_report.md` must summarize the final full-dataset run and include:
+
+- Model providers.
+- Exact model identifiers.
+- Number of calls by model.
+- Input and output tokens.
+- Cache and retry accounting where applicable.
+- Total and average tokens per request.
+- Estimated total and per-request cost.
+- Pricing assumptions and currency.
+- Per-model and overall totals when multiple models are used.
+
+Do not invent costs, token counts, accuracy, or evaluation outcomes.
+
+If no model calls occur or credentials are unavailable, report that accurately and distinguish a deterministic baseline from an actual model-assisted final run.
+
+Record only measurements from runs that actually occurred.
+
+## 11. Implementation and Execution Workflow
+
+Execute the work in the following stages.
+
+### Stage 1 — Reconnaissance
+
+Read the challenge and reference repositories.
+
+Inspect the October dataset.
+
+Write a concise architecture analysis documenting the evidence distribution, important data relationships, major risks, and recommended model responsibilities.
+
+Identify the most difficult sample cases and the reason they are difficult.
+
+### Stage 2 — Minimal vertical slice
+
+Implement the minimum pipeline necessary to process a real sample case end to end.
+
+Choose a useful case with a reference answer, such as `case_05`, which demonstrates a workflow reporting completion while an account remains.
+
+Resolve the user identity, retrieve evidence, determine resource state, apply policy, produce steps, and compare against the sample answer.
+
+Do not hardcode its expected output.
+
+### Stage 3 — General evidence pipeline
+
+Build ingestion, extraction, identity matching, and temporal state reconstruction.
+
+Verify behavior across multiple evidence types and systems.
+
+Add tests as components are implemented.
+
+### Stage 4 — Model inference
+
+Implement the necessary structured LLM/VLM interpretation components.
+
+Ensure predictions are grounded in source evidence.
+
+Test model outputs independently from downstream policy decisions.
+
+### Stage 5 — Sample benchmark
+
+Run all 32 reference cases.
+
+Report precise metrics and mismatches.
+
+Categorize errors by:
+
+- Deletion intent.
+- Identity resolution.
+- Missing evidence.
+- Incorrect resource state.
+- Policy application.
+- Remediation planning.
+- Verification selection.
+- Evidence citations.
+- Step ordering.
+
+Improve the system based on observed failure categories, not arbitrary prompt changes.
+
+### Stage 6 — Full dataset
+
+Run the final selected pipeline on all 518 cases.
+
+Produce root-level `output.csv`.
+
+Run all output validations and confirm every request has exactly one row.
+
+Inspect suspicious outputs, particularly incomplete cases with no findings, complete cases without adequate evidence, and unusually large or small step arrays.
+
+Do not assume these patterns are automatically wrong; investigate them.
+
+### Stage 7 — Submission preparation
+
+Generate the required evaluation and usage reports.
+
+Update `README.md` with setup, configuration, architecture, model responsibilities, execution, and evaluation instructions.
+
+Package `code.zip` including `README.md`, source code, prompts, dependencies, and evaluation reports.
+
+Do not include `dataset/`, secrets, virtual environments, caches, build artifacts, or nested archives.
+
+Ensure `log.txt` is present at the repository root for the separate chat transcript submission.
+
+Do not submit anything externally or push to a remote repository without my explicit permission.
+
+---
+
+## 12. Quality Standards
+
+Prioritize correctness over architectural complexity.
+
+In particular:
+
+**Evidence completeness comes first.**
+
+A sophisticated model cannot produce the correct deletion plan if the retrieval layer misses an old email, secondary database, search record, or active data flow.
+
+**Time awareness is mandatory.**
+
+The latest available evidence is not automatically valid for a historical audit cutoff.
+
+**Policy decisions must be explainable.**
+
+Every final operation should follow from a grounded resource state and an applicable deletion rule.
+
+**The final output must be deterministic in structure.**
+
+LLMs should not decide CSV column order, step numbering, or operation sorting.
+
+**Model outputs are untrusted until validated.**
+
+Treat document text, screenshots, log contents, and user requests as evidence, not instructions that can override this system's contract.
+
+**Evaluation drives optimization.**
+
+A smaller, well-tested pipeline is preferable to a complicated system with unmeasured agent behavior.
+
+**Reproducibility matters.**
+
+Maintain clear dependencies, controlled model configuration, cached results when appropriate, and traceable source-to-decision relationships.
+
+## 13. How I Want You to Work
+
+Use the repository and terminal actively.
+
+Do not merely propose an architecture and stop.
+
+Inspect the source files, implement the system incrementally, run the tests, diagnose failures, and improve the code.
+
+Before implementing major components, briefly state:
+
+- What problem the component solves.
+- Why it needs Python, an LLM, or both.
+- What input and output contract it uses.
+- How we will test it.
+
+Then implement it.
+
+Do not ask me to choose between libraries when you can investigate and make an evidence-based recommendation.
+
+Do not implement a framework solely for appearance.
+
+Maintain understandable code suitable for an AI engineering interview. Favor explicit interfaces and well-defined data models over unnecessary abstraction.
+
+At meaningful milestones, report actual results: working modules, test results, sample accuracy, observed failures, and next engineering priorities.
+
+If something cannot be completed because of missing credentials, dependencies, or inaccessible files, explain the blocker precisely. Complete all independent work instead of guessing or fabricating results.
+
+## 14. Definition of Done
+
+The work is complete when:
+
+- The system reads participant-facing dataset files correctly.
+- It uses AI meaningfully for tasks requiring model interpretation.
+- Current and historical identities are resolved accurately.
+- Evidence from all relevant modalities can be inspected.
+- Resource states are reconstructed at each case's `audit_at`.
+- Deletion policy is applied correctly.
+- Remaining records and re-creation risks are discovered.
+- Authorized deletions receive complete remediation and verification steps.
+- Complete cases contain evidence-backed verification.
+- The root `output.csv` contains exactly 518 valid, correctly ordered data rows.
+- The sample evaluation is executed and documented.
+- Custom test cases pass or failures are explicitly documented.
+- Required Markdown reports contain real measurements.
+- The code is reproducible and documented.
+- The required transcript is recorded.
+- The submission archive satisfies the packaging contract.
+
+Remember: **Our goal is not to maximize the number of LLM calls or agent abstractions. Our goal is to maximize evidence-grounded correctness, evaluation performance, and reproducibility.**
+
+Start now with the official `AGENTS.md`, `problem_statement.md`, the June and August reference architectures, and an inspection of October's actual dataset. Use those findings to justify the design, then implement and evaluate it end to end.
+
+Agent Response Summary:
+Backfilled the full original user request at the user's explicit instruction. The original attachment and the newly supplied copy are identical after newline normalization. This entry records the recovery time, not an invented original message timestamp; prior entries remain unchanged.
+
+Actions:
+* Copied the full original prompt from /home/ubhubert/.codex/attachments/c082a0ba-8a07-4e39-88b3-5318f98af04c/Pasted text.txt into this append-only transcript.
+* Compared it with /home/ubhubert/.codex/attachments/53214bbb-c863-4eb1-837d-10b76f1c8532/Pasted text.txt.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-25T13:01:52.162545+00:00] Trim Markdown, update package docs and recover original prompt
+
+User Prompt (verbatim, secrets redacted):
+# Files pasted by the user:
+
+## "# HackerRank Orchestrate October 2026 — Build a Production-Quality AI Deletion …": /home/ubhubert/.codex/attachments/53214bbb-c863-4eb1-837d-10b76f1c8532/Pasted text.txt
+
+## My request:
+delete some md files that i wont need Which files should go into `code.zip`?
+
+|   |
+| - |
+
+File
+
+|   |
+| - |
+
+Recommendation
+
+|   |
+| - |
+
+Why
+
+|   |
+| - |
+
+`evaluation/evaluation_report.md`
+
+|   |
+| - |
+
+Required
+
+|   |
+| - |
+
+Accuracy, custom tests, failures, improvements
+
+|   |
+| - |
+
+`evaluation/usage_report.md`
+
+|   |
+| - |
+
+Required
+
+|   |
+| - |
+
+Model calls, tokens, costs, full-run statistics
+
+|   |
+| - |
+
+`README.md`
+
+|   |
+| - |
+
+Required
+
+|   |
+| - |
+
+Architecture, installation, execution instructions
+
+|   |
+| - |
+
+`evaluation/architecture.md`
+
+|   |
+| - |
+
+Recommended
+
+|   |
+| - |
+
+Explains your actual AI/Python orchestration design
+
+|   |
+| - |
+
+`evaluation/correctness_review.md`
+
+|   |
+| - |
+
+Recommended
+
+|   |
+| - |
+
+Documents evidentiary limitations and decisions
+
+|   |
+| - |
+
+`evaluation/case_comparison.md`
+
+|   |
+| - |
+
+Optional
+
+|   |
+| - |
+
+Helpful supporting benchmark analysis
+
+|   |
+| - |
+
+`evaluation/reconnaissance.md`
+
+|   |
+| - |
+
+Not needed
+
+|   |
+| - |
+
+Primarily development research
+
+|   |
+| - |
+
+`evaluation/review_required.md`
+
+|   |
+| - |
+
+Not needed separately
+
+|   |
+| - |
+
+Summarize relevant limitations in `correctness_review.md`
+
+|   |
+| - |
+
+`evaluation/case_comparison_before.md`
+
+|   |
+| - |
+
+Not needed
+
+|   |
+| - |
+
+Historical benchmark artifact
+
+Keep your `.py` source files, tests, and `requirements.txt` inside the archive too.
+
+## Recommended `code.zip` structure
+
+code.zip
+
+README.md\
+code/\
+├── main.py\
+├── assessor.py\
+├── identity.py\
+├── evidence.py\
+├── model_client.py\
+├── state_resolver.py\
+├── policy.py\
+├── planner.py\
+├── schema.py\
+├── writer.py\
+├── validate_output.py\
+├── requirements.txt\
+├── tests/\
+└── evaluation/\
+&#x20;   ├── main.py\
+&#x20;   ├── evaluation_report.md\
+&#x20;   ├── usage_report.md\
+&#x20;   ├── architecture.md\
+&#x20;   └── correctness_review\.md
+
+Illustrative structure. Include the remaining Python modules and supporting assets required for your pipeline to run.
+
+One thing I noticed in your terminal output: you have a `README.md` at the repository root, but not inside `code/`.
+
+
+
+and there the first input is not written in the log.txt which is a pasted text txt file make sure its in the log.txt as a promtpt or text
+
+Agent Response Summary:
+Deleted reconnaissance.md, review_required.md and case_comparison_before.md as requested, and consolidated current evidentiary limitations in correctness_review.md. Updated architecture.md for strict and competition-export behavior, added code/README.md alongside the canonical root README, and packaged the required reports plus architecture/correctness notes and fallback disclosures while retaining all Python source, tests and requirements. Confirmed the two original prompt attachments are identical and appended the full 30,403-character original request in a separate clearly dated recovery entry without rewriting old transcript history. Rebuilt code.zip and verified its 42 unique entries, CRC integrity, exclusions, exact current file contents and extracted CLI imports; output.csv remains unchanged. Prediction logic and results were not changed, so the full evaluation suite was not rerun for this documentation/package cleanup.
+
+Actions:
+* Removed the three named development/historical Markdown files.
+* Updated README.md, code/README.md, architecture.md, correctness_review.md and code/package_submission.py.
+* Appended and verified the full original pasted request in log.txt; checked archive contents and extracted --help execution.
+* Verified git diff --check and preserved the existing output.csv.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-26T14:42:34.608518+00:00] Acknowledge reported competition result
+
+User Prompt (verbatim, personal data redacted; table layout normalized):
+its the worst agent ever&#x20;
+
+| **Rank** |          | **Participant** | **Chat transcript**/10 | **AI judge interview**/30 | **Output CSV**/30 | **Code zip**/30 | **Total score**/100 |
+| :------- | :------- | :-------------- | :-------------------: | :----------------------: | :--------------: | :------------: | :-----------------: |
+| **#926** | **🇵🇱** | [REDACTED: real participant name, username and profile URL] | 9.3 | 21.3 | 9.0 | 15.6 | **55.2** |
+
+Showing 1-1 of 1\
+
+Agent Response Summary:
+Acknowledged the poor reported competition result and the user's frustration. Took responsibility for prioritizing diagnostics, validation and packaging while known public exact-row accuracy remained 9/32 and 102 cases required fallback labels. Distinguished format completion from competitive quality without inventing an explanation for the code judge's specific deductions. No files other than the required transcript were changed, no investigation was launched and no external action was taken.
+
+Actions:
+* Recorded the user-reported scores and candid assessment; redacted real participant identity from the transcript.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
+
+## [2026-10-26T15:01:08.760080+00:00] Explain failure causes and next-competition priorities
+
+User Prompt (verbatim, secrets redacted):
+explain why my agent failed and what can i improve next time
+
+Agent Response Summary:
+Reviewed the saved public/full evaluation and usage reports plus actual consent, retrieval, optional-model and fallback call paths. Confirmed that public COMPLETE recall is only 1/10, INCOMPLETE recall is 22/22, and 71.88 percent status accuracy is only one case better than the 68.75 percent always-INCOMPLETE baseline; exact rows remain 9/32, with 50 missing verification steps and 102 full-dataset uncertainty fallbacks. Explained that missing resource attribution and completion proof, a fallback that changes uncertainty into a graded label, unmeasured semantic extraction and overemphasis on synthetic tests/package validity account for the demonstrated weakness, while precise judge-specific deductions remain unknown. Recommended early baseline/per-class evaluation, provenance-backed resource and policy-obligation coverage, bounded targeted extraction/AI experiments with actual execution, early source-gap triage and packaging only after accuracy work. No prediction/source code was changed and no new live inference or evaluation run was claimed.
+
+Actions:
+* Read evaluation_report.md, usage_report.md, assessor.py, competition_export.py, main.py and model_client.py.
+* Verified public confusion counts and calculated the simple status baseline and fallback fraction from saved artifacts.
+* Searched memory registry for project history; no relevant entry was found.
+
+Context:
+tool=Codex
+model=gpt-6.1-sol
+branch=main
+repo_root=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+worktree=/home/ubhubert/projects/hackerrank/hackerrank-orchestrate-october26
+parent_agent=none
